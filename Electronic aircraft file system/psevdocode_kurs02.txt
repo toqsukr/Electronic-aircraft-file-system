@@ -1,0 +1,874 @@
+алг main()
+дано| входные данные в файле csv
+надо| организовать работу с данными(вывод, поиск по полю, редактирование, сортировка, удаление, сохранение)
+нач
+    цел mdf;
+    запись Airplane_Head node0;
+    запись Airplane node1;
+    char path[MAXLEN];
+    mdf := 0;
+    path := "kursuch_02_data.csv";
+    node1 := create_singly_connected_ring_list(path);
+    node0 := create_doubly_linked_list(node1, path);
+    mdf := catch_exception(0, 5);
+    пока(mdf <> 5)
+        если(mdf == 0) то   вывод справки;
+        иначе если(mdf == 1) то 
+            path := create_path();
+            node1 := create_singly_connected_ring_list(path);
+            node0 := create_doubly_linked_list(node1, path);
+        иначе если(mdf == 2) то 
+            если(node0.cnt <> 0) то
+                mdf := catch_exception(0, 2);
+                если(mdf == 0) то   output_doubly_linked_list(node0);
+                иначе если(mdf == 1) то     output_simply_connected_ring_list(node1);
+                иначе   searching_information(node0);
+        иначе если(mdf == 3) то
+            mdf := catch_exception(0, 3);
+            если(mdf == 0) то    node1 := add_information(node0, node1);
+            иначе если(mdf == 1) то     
+                если(node0.cnt == 0) то    вывод ("The list is empty!");
+                иначе    node1 := adjust_information(node0, node1); 
+            иначе если(mdf == 2) то 
+                если(node0.cnt == 0) то    вывод ("The list is empty!");   
+                иначе есил(node0.cnt == 1) то   output_doubly_linked_list(node0);
+                иначе   node0 := make_sort(node0); 
+            иначе
+                если(node0.cnt == 0)    вывод ("The list is empty!");
+                иначе   node1 := delete_information(node0, node1);
+        иначе если(mdf == 4) то     save_information(node0);
+        mdf := catch_exception(0, 1);
+        если(mdf == 1) то   mdf := 5;
+        иначе   mdf := catch_exception(0, 5);
+кон      
+
+функция create_path()
+дано| 
+надо| ввести строку-путь к файлу с данными
+нач
+    сим path[MAXLEN];
+    ввод path;
+    return path;
+кон
+
+функция create_singly_connected_ring_list(сим path[MAXLEN])
+дано| строка-путь к файлу с данными
+надо| создать кольцевой список производителей
+нач
+    цел i, n, first, flag;
+    запись country node1, p, country0;
+    сим s1[MAXLEN], mass[MAXLEN][MAXLEN];
+    открытие файла;
+    n := 0;
+    first := 1;
+    пока(считывается строка)    n := n + 1;
+    для i от 0 до n
+        flag := 1;
+        ввод s1;
+        mass := split_string(s1, длина(s1), ';');
+        country0.str := mass[1];
+        если(first) то
+            node1 := country0;
+            first := 0;
+            node1.next := NULL;
+        иначе
+            p := node1;
+            пока(p <> NULL)
+                если(comparison_strings(p.str, mass[1])) то     flag := 0;
+                p := p.next;
+            кц
+            если(flag) то
+                p := node1;
+                пока(p.next <> NULL)   p := p.next;
+                p.next := country0;
+                country0.next := NULL;
+    кц
+    закрытие файла;
+    node1.cnt := n;
+    p := node1;
+    пока(p.next <> NULL)   p := p.next;
+    p.next := node1;
+    return node1;
+кон
+
+функция create_doubly_linked_list(запись country node1, сим path[MAXLEN])
+дано| голова кольцевого списка, строка-путь к файлу с данными
+надо| создать двусвязный линейный список
+нач
+    запись Airplane_Head node0;
+    запись Airplane plane0;
+    цел i, n, first;
+    сим sep, s1[MAXLEN], mass[MAXLEN][MAXLEN];
+    sep := ';';
+    n := 0;
+    first := 1;
+    пока(считывается строка)    n := n + 1;
+    node0 := make_head();
+    node0.cnt := n;
+    для i от 0 до n
+        ввод s1;
+        mass := split_string(s1, длина(s1), sep);
+        plane0 := struct_fill(mass, node1, i+1);
+        если(first) то
+            add_first(node0, plane0);
+            first := 0;
+        иначе   add_last(node0, plane0);
+    кц
+    node0.lasr_id := node0.cnt;
+    return node0;
+кон
+
+функция make_sort(struct Airplane_Head node0);
+дано| голова двусвязного линейного списка
+надо| отсортировать список по выбранному полю
+нач
+    цел mdf, k, j, i;
+    запись Airplane p, p0, data;
+    mdf := catch_exception(0, 1);
+    если(mdf == 0) то
+        mdf := catch_exception(0, 9);
+        если(mdf == 0) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.id > p.next.id) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 1) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.name[0] > p.next.name[0]) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 2) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.manuf[0] > p.next.manuf[0]) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 3) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.year > p.next.year) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 4) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.range > p.next.range) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 5) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.weight > p.next.weight) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 6) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.price > p.next.price) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 7) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.options[0] > p.next.options[0]) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 8) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.options[1] > p.next.options[1]) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе 
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.options[2] > p.next.options[2]) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+    иначе
+        mdf := catch_exception(0, 9);
+        если(mdf == 0) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.id < p.next.id) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 1) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.name[0] < p.next.name[0]) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 2) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.manuf[0] < p.next.manuf[0]) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 3) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.year < p.next.year) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 4) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.range < p.next.range) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 5) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.weight < p.next.weight) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 6) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.price < p.next.price) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 7) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.options[0] < p.next.options[0]) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе если(mdf == 8) то
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.options[1] < p.next.options[1]) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+        иначе 
+            для i от 0 до node0.cnt-1
+                p0 := node0.first;
+                для j от 0 до node0.cnt-1
+                    p := p0;
+                    если(p.options[2] < p.next.options[2]) то   shuffle_elements(node0, p);
+                    иначе   p0 := p0.next;
+                кц
+            кц
+    output_doubly_linked_list(node0);
+    return node0;
+кон
+
+функция shuffle_elements(запись Airplane_Head node0, запись Airplane p)
+дано| голова двусвязного списка, элемент списка
+надо| переставить местами переданный элемент списка со следующим
+нач
+    запись Airplane data;
+    если(p == node0.first) то
+        data := p.next;
+        если(p.next.next <> NULL) то   p.next := p.next.next;
+        иначе   p.next := NULL;
+        node0.first := data;
+        data.prev := NULL;
+        p.prev := data;
+        если(data.next <> NULL)    data.next.prev := p;
+        data.next := p;
+    иначе если(p.next == node0.last)
+        data := p.next;
+        p.next := NULL;
+        p.prev.next := data;
+        data.prev := p.prev;
+        p.prev := data;
+        node0.last := p;
+        data.next := p;
+    иначе
+        data := p.next;
+        p.next := p.next.next;
+        p.prev.next := data;
+        data.prev := p.prev;
+        p.prev := data;
+        data.next.prev := p;
+        data.next := p;
+кон
+
+функция searching_information(запись Airplane_Head node0)
+дано| голова линейного двусвязного списка
+надо| найти элемент списка по введенной информации и вывести его
+нач
+    запись Airplane p;
+    цел mdf, first;
+    сим sbstr[MAXLEN];
+    mdf := catch_exception(0, 9);
+    sbstr := ввод строки;
+    first := 1;
+    p := node0.first;
+    пока(p <> NULL)
+        если(mdf == 0 И цел(sbstr) == p.id) то
+            вывод p;
+            first := 0;
+        иначе если(mdf == 1 И comparison_strings(p.name, sbstr)) то
+            вывод p;
+            first := 0;
+        иначе если(mdf == 2 И comparison_strings(p.manuf, sbstr)) то
+            вывод p;
+            first := 0;
+        иначе если(mdf == 3 И цел(sbstr) == p.year) то
+            вывод p;
+            first := 0;
+        иначе если(mdf == 4 И цел(sbstr) == p.range) то
+            вывод p;
+            first := 0;
+        иначе если(mdf == 5 И дроб(sbstr) == weight) то
+            вывод p;
+            first := 0;
+        иначе если(mdf == 6 И дроб(sbstr) == p.price) то
+            вывод p;
+            first := 0;
+        иначе если(mdf == 7 И дроб(sbstr) == p.options[0]) то
+            вывод p;
+            first := 0;
+        иначе если(mdf == 8 И дроб(sbstr) == p.options[1]) то    
+            вывод p;
+            first := 0;
+        иначе если(mdf == 9 И дроб(sbstr) == p.options[2]) то
+            вывод p;
+            first := 0;
+        p := p.next;
+    кц
+    если(first) то      вывод ("Not found!");
+кон
+
+функция add_information(запись Airplane_Head node0, запись Airplane node1)
+дано| голова линейного двусвязного списка, голова кольцевого односвязного списка
+надо| создать новый элемент двусвязного списка, запольнить с клавиатуры и добавить в список
+нач
+    запись country;
+    запись Airplane;
+    сим mass[MAXLEN][MAXLEN];
+    цел i, flag;
+    flag := 1;
+    ввод mass[0];
+    ввод mass[1];
+    ввод mass[2];
+    ввод mass[3];
+    ввод mass[4];
+    ввод mass[5];
+    ввод mass[6];
+    ввод mass[7];
+    ввод mass[8];
+    если(node1 == NULL) то
+        node1 := add_elem_of_ring(ndoe1, mass[1]);
+        node1.cnt := node1.cnt + 1;
+        p := struct_fill(mass, node1, 1);
+        p.manuf := node1.str;
+        add_first(node0, p);
+        node0.last_id := node0.last_id + 1;
+        p.id := node0.last_id;
+        p := node0.first;
+        node0.cnt := node0.cnt + 1;
+    иначе
+        k := node1;
+        делать
+            если(check_strings_for_identity(mass[1], k.str)) то     flag := 0;
+            k := k.next;
+        пока(k <> node1);
+        если(flag) то   node1 := add_elem_of_ring(node1, mass[1]);
+        node1.cnt := node1.cnt + 1;
+        p := struct_fill(mass, node1, 1);
+        пока(не(check_strings_for_identity(mass[1], k.str)))    k := k.next;
+        p.manuf := k.str;
+        add_last(node0, p);
+        node0.last_id := node0.last_id + 1;
+        p.id := node0.last_id;
+        p := node0.first;
+        node0.cnt := node0.cnt + 1;
+    output_doubly_linked_list(node0);
+    output_simply_connected_ring_list(node1);
+    return node1;
+кон
+
+функция adjust_information(запись Airplane_Head node0, запись country node1)
+дано| голова двусвязного линейного списка, голова односвязного кольцевого списка
+надо| отредактировать выбранный элемент списка или выбранное поле элемента списка
+нач
+    цел i, mdf, flag, num;
+    дроб chsl;
+    запись Airplane p, data;
+    запись Airplane_Head k, prev;
+    сим mass[MAXLEN][MAXLEN], elem[MAXLEN], str[MAXLEN];
+    mdf := catch_exception(0, 2);
+    если(mdf == 0)
+        output_simply_connected_ring_list(node1);
+        ввод elem;
+        если(is_str_in_list(node0, elem)) то
+            k := node1;
+            пока(не(check_strings_for_identity(k.str, elem)))   k := k.next;
+            пока(is_in_str_in_list(node0, elem))
+                p := node0.first;
+                пока(не(check_strings_for_identity(p.manuf, elem)))   p := p.next;
+                p.manuf := str;
+            кц
+            если(is_in_ring(node1, str)) то     node1 := delete_elem_of_ring(node1, k);
+            иначе   k.str := str;
+            output_doubly_linked_list(node0);
+        иначе   вывод ("Not found!");
+    иначе если(mdf == 1) то
+        output_doubly_linked_list(node0);
+        mdf := catch_exception(0, node0.last_id);
+        p := node0.first;
+        пока(p.id != mdf)   p := p.next;
+        mdf := catch_exception(0, 8);
+        если(mdf == 0) то
+            ввод elem;
+            p.name := elem;
+        иначе если(mdf == 1) то
+            flag := 1;
+            ввод elem;
+            если(не(check_strings_for_identity(prev.str, elem))) то     prev := prev.next;
+            data := p;
+            data.manuf := p.manuf;
+            p.manuf := prev.str;
+            prev := node1;
+            если(не(is_str_in_list(node0, data.manuf))) то
+                пока(не(check_strings_for_identity(data.manuf, prev.str)))  prev := prev.next;
+                node1 := delete_elem_of_ring(node1, prev);
+        иначе если(mdf == 2) то
+            ввод num;
+            p.year := num;
+        иначе если(mdf == 3) то
+            ввод num;
+            p.range := num;
+        иначе если(mdf == 4) то
+            ввод chsl;
+            p.weight := chsl;
+        иначе если(mdf ==5) то
+            ввод chsl;
+            p.price := chsl;
+        иначе если(mdf == 6) то
+            ввод chsl;
+            p.options[0] := chsl;
+        иначе если(mdf == 7) то
+            ввод chsl;
+            p.options[1] := chsl;
+        иначе 
+            ввод chsl;
+            p.options[2] := chsl;
+    иначе если(mdf == 2) то
+        output_doubly_linked_list(node0);
+        mdf := catch_exception(0, node0.last_id);
+        p := node0.first;
+        если(mdf == node0.first.id) то    elem := p->mnauf;
+        иначе если(mdf == node0.last.id) то
+            p := node0.last;
+            elem := p.manuf;
+        иначе
+            пока(p.next.id <> mdf)     p := p.next;
+            elem := p.next.manuf;
+        flag := 1;
+        ввод mass[0];
+        ввод mass[1];
+        ввод mass[2];
+        ввод mass[3];
+        ввод mass[4];
+        ввод mass[5];
+        ввод mass[6];
+        ввод mass[7];
+        ввод mass[8];
+        делать
+            если(check_strings_for_identity(mass[1], k.str))    flag := 0;
+            k := k.next;
+        пока(k <> node1);
+        если(flag) то   node1 := add_elem_of_ring(node1, mass[1]);
+        data := struct_fill(mass, node1, 1);
+        data.id := mdf;
+        если(mdf == node0.first.id) то
+            node0.first := data;
+            data.next := p;
+            p.prev := data;
+        иначе если(mdf == node.last.id)
+            p.prev.next := data;
+            data.prev := p.prev;
+            data.next := p;
+            p.prev := data;
+        иначе
+            p.next.prev := data;
+            data.next := p.next;
+            data.prev := p;
+            p.next := data;
+        p := node0.first;
+        пока(не(check_strings_for_identity(p, data)))   p := p.next;
+        p := p.next;
+        если(node0.last_id == p.id) то    node0.last_id := find_last_id(node0);
+        если(is_in_list(node0, p.id)) то
+            k := node1;
+            пока(не(check_strings_for_identity(k.str, p.manuf)))    k := k.next;
+            node1 := delete_elem_of_ring(node1, k);
+            output_simply_connected_ring_list(node1);
+            node1.cnt := node1.cnt - 1;
+        delete_elem_of_doubly_linked_list(node0, p);
+        node0.cnt := node0.cnt + 1;
+        output_doubly_linked_list(node0);
+    output_simply_connected_ring_list(node1);
+    output_doubly_linked_list(node0);
+кон
+
+функция delete_information(запись Airplane_Head node0, запись country node1)
+дано| голова двусвязного линейного списка, голова односвязного кольцевого списка
+надо| удалить элемент из двусвязного списка по id или все элементы из двусвязного списка с определенным полем manuf
+нач
+    запись country k;
+    запись Airplane p, next, data;
+    сим str[MAXLEN];
+    цел i, mdf, flag;
+    mdf := catch_exception(0, 1);
+    если(mdf == 0) то
+        output_simply_connected_ring_list(node1);
+        ввод str;
+        если(node0.cnt не= 1) то
+            для i от до node0.cnt
+                flag := 0;
+                k := node1;
+                делать  
+                    если(check_strings_for_identity(k.str, str))
+                    k := k.next;
+                пока(k <> node1)
+                если(flag) то
+                    p := node0.first;
+                    пока(не(check_strings_for_identity(p.manuf, str)))  p := p.next;
+                    если(p.id == node0.last_id) то
+                        delete_elem_of_doubly_linked_list(node0, p);
+                        node0.last_id := find_last_id(node0);
+                    иначе   delete_elem_of_doubly_linked_list(node0, p);
+                    p := node0.first;
+                    пока(p <> NULL)
+                        если(check_strings_for_identity(p.manuf, str))  flag := 0;
+                        p := p.next;
+                    кц
+                    если(flag) то
+                        k := node1;
+                        пока(не(check_strings_for_identity(k.str, str)))    k := k.next;
+                        node1 := delete_elem_of_ring(node1, k);
+                        node1.cnt := node1.cnt - 1;
+                иначе если(i == 0)      вывод ("Not found!");
+        иначе
+            p := node0.first;
+            пока(не(check_strings_for_identity(p.manuf, str)))  p := p.next;
+            node0.last_id := 0;
+            delete_elem_of_doubly_linked_list(node0, p);
+            node1 := delete_elem_of_ring(node1, node1);
+            node0.first := NULL;
+            node0.last := NULL;
+        output_doubly_linked_list(node0);
+    иначе
+        output_doubly_linked_list(node0);
+        mdf := catch_exception(1, node0.last_id);
+        p := node0.first;
+        пока(p.id <> mdf)   p := p.next;
+        если(node0.cnt <> 1) то
+            k := node1;
+            пока(не(check_strings_for_identity(k.str, p.manuf)))     k := k.next;
+            next := p.next;
+            если(node0.last_id == p.id) то     node0.last_id := find_last_id(node0);
+            если(is_in_list(node0, p.id)) то
+                k := node1;
+                пока(не(check_strings_for_identity(k.str, p.manuf)))     k := k.next;
+                node1 := delete_elem_of_ring(node1, k);
+                output_simply_connected_ring_list(node1);
+                node1.cnt := node1.cnt - 1;
+            delete_elem_of_doubly_linked_list(node0, p);
+            output_doubly_linked_list(node0);
+        иначе
+            node0.last_id := 0;
+            delete_elem_of_doubly_linked_list(node0, p);
+            node1 := delete_elem_of_ring(node1, node1);
+            node0.first := NULL;
+            node0.last := NULl;
+    return node1;
+кон
+
+
+функция find_last_id(запись Airplane_Head node0)
+дано| голова двусвязного линейного списка
+надо| возвращает последний id в списке
+нач
+    цел lst;
+    запись Airplane p;
+    p := node0.first;
+    lst := 0;
+    пока(p <> NULL)
+        если(p.id > lst) то     lst := p.id;
+        p := p.next;
+    кц
+    return lst;
+кон
+
+функция delete_elem_of_doubly_linked_list(запись Airplane_Head node0, запись Airplane p)
+дано| голова двусвязного линейного списка, элемент двусвязного линейного списка
+надо| удалить данный элемент из двусвязного списка
+нач
+    запись Airplane k;
+    если(p == node0.first) то
+        k := p;
+        p := p.next;
+        node0.first := p;
+    иначе если(p == node0.last) то
+        k := p;
+        p := p.prev;
+        node0.last := p;
+    иначе
+        k := p.prev;
+        p := p.next;
+        p.prev := k;
+        k.next := p;
+    node0.cnt := node0.cnt - 1;
+кон
+
+функция add_elem_of_ring(запись country node1, сим str[MAXLEN])
+дано| голова односвязного кольцевого списка, строка
+надо| добавить строку в список
+нач
+    запись country p, k;
+    k := node1;
+    если(node1 <> NULL) то
+        делать      k := k.next;
+        пока(k.next <> node1);
+        p.str := str;
+        k.next := p;
+        p.next := node1;
+    иначе
+        p.str := str;
+        p.next := p;
+        node1 := p;
+    return node1
+кон
+
+функция delete_elem_of_ring(запись country node1, запись country p)
+дано| голова односвязного кольцевого списка, элемент списка
+надо| удалить данный элемент из списка
+нач
+    запись country prev := NULL;
+    если(не(p == node1 И p.next == node1)) то
+        если(p == node1) то
+            prev := p;
+            p := p.next;
+            node1 := p;
+            пока(p.next.next <> node1)      p := p.next;
+            p.next := node1;
+        иначе если(p.next == node1) то
+            prev := p;
+            пока(p.next.next <> node1)      p := p.next;
+            p.next := node1;
+        иначе
+            prev := p;
+            пока(p.next <> prev)      p := p.next;
+            p.next := prev.next;
+    return node1;
+кон
+
+функция struct_fill(сим mass[MAXLEN][MAXLEN], запись country node1, цел n)
+дано| массив строк, голова кольцевого списка, id элемента
+надо| заполнить структуру данными из массива
+нач
+    запись Airplane new_node;
+    new_node.id := n;
+    new_node.name := mass[0];
+    new_node.manuf := node1.str;
+    new_node.year := цел(mass[2]);
+    new_node.range := цел(mass[3]);
+    new_node.weight := дроб(mass[4]);
+    new_node.price := дроб(mass[5]);
+    new_node.options[0] := дроб(mass[6]);
+    new_node.options[1] := дроб(mass[7]);
+    new_node.options[2] := дроб(mass[8]);
+    new_node.next := NULL;
+    new_node.prev := NULL;
+    return new_node;
+кон
+
+функция add_first(запись Airplane_Head my_head, запись Airplane new_node)
+дано| голова двусвязного линейного списка, элемент для добавления
+надо| добавить первый элемент в список
+нач
+    my_head.first := new_node;
+    my_head.last := new_node;
+кон
+
+функция add_last(запись Airplane_Head my_head, запись Airplane new_node)
+дано| голова двусвязного линейного списка, элемент для добваления
+надо| добавить элемент в конец списка
+нач
+    запись Airplane p;
+    p := my_head.first;
+    пока(p.next <> NULL)    p := p.next;
+    p.next := new_node;
+    new_node.prev := p;
+    my_head.last := new_node;
+    new_node.next := NULl;
+кон
+
+функция save_information(запись Airplane_Head node0)
+дано| голова двусвязного линейного списка
+надо| сохранить информацию в файл result_pakulov_kurs.csv
+нач
+    запись Airplane p;
+    открытие файла;
+    p := node0.first;
+    пока(p <> NULL)
+        ввод p.name;
+        ввод p.manuf;
+        ввод p.year;
+        ввод p.range;
+        ввод p.weight;
+        ввод p.price;
+        ввод p.options[0];
+        ввод p.options[1];
+        ввод p.options[2];
+        p := p.next;
+    кц
+    закрытие файла;
+кон
+
+функция catch_exception(цел a, цел b)
+дано| два числа - концы отрезка
+надо| добиться от пользоватля ввода значения из диапазона
+нач
+    цел f, mdf;
+    делать
+        если(mdf < a ИЛИ mdf > b)   вывод ("Incorrect input! Please try again: ");
+    пока(mdf < a || mdf > b);
+    return mdf;
+кон
+
+функция is_str_in_list(запись Airplane_Head node0, сим str[MAXLEN])
+дано| голова двусвязного линейного списка, строка
+надо| проверить, принадлежит ли строка полю элементов списка
+нач
+    цел flag;
+    запись Airplane p;
+    flag := 0;
+    p := node0.first;
+    пока(p <> NULL)
+        если(check_strings_for_identity(str, p.manuf)) то   flag := 1;
+        p := p.next;
+    кц
+    return flag;
+кон
+
+функция is_in_list(запись Airplane_Head node0, цел mdf)
+дано| голова двусвязного линейного списка, id 
+надо| проверить, существует ли элемент с данным id
+нач
+    запись Airplane p;
+    цел flag;
+    flag := 0;
+    p := node0.first;
+    пока(p <> NULL И не(flag))
+        если(p.id == mdf)   flag := 1;
+        p := p.next;
+    кц
+    return flag;
+кон
+
+функция is_in_ring(запись country node1, сим str[MAXLEN])
+дано| голова односвязного кольцевого списка, строка
+надо| проверить, принадлежит ли строка списку
+нач
+    цел flag;
+    запись country p;
+    flag := 0;
+    p := node1;
+    делать
+        если(check_strings_for_identity(str, p.str)) то   flag := 1;
+        p := p.next;
+    пока(p <> node1)
+    return flag;
+кон
+
+фукнция check_strings_for_identity(сим string[MAXLEN], сим substr[MAXLEN])
+дано| две строки
+надо| проверить строки на полное совпадение
+нач
+    цел flag;
+    беззн цел i, j;
+    flag := 0;
+    если(длина(substr) == длина(string)) то
+        для i от 0 до длина(string)-длина(substr)+1
+            flag := 1;
+            если(string[i] == substr[0] || abs(цел(string[i]) - цел(substr[0]]) == 32)) то
+                для j от 1 до длина(substr)     если(substr[j] <> substr[i+j] И abs(цел(substr[j] - цел(string[i+j]) <> 32))) то  flag := 0
+                если(flag) то   i := длина(string) - длина(substr)+1;
+            иначе   flag := 0;
+        кц
+    return flag;
+кон
+
+функция comparison_strings(цел string[MAXLEN], цел sbstr[MAXLEN])
+дано |строка, подстрока 
+надо |вернуть 1, если подстрока содержится в строке, иначе - 0 нач 
+ цел flag; 
+ беззн цел i, j; 
+ flag := 0; 
+ если(длина(sbstr) <= длина(string)) то 
+    для i от 0 до длина(string) - длина(substr)+1 
+        flag := 1; 
+        если(string[i] == substr[0] ИЛИ abs((цел)string[i] - (цел)substr[0]) == 32) то 
+            для j от 1 до длина(substr) если(substr[j] <> string[i+j]  И abs((цел)substr[j] - (цел)string[i+j]) <> 32) то flag := 0;  
+            если(flag) то i := длина(string) - длина(substr)+1
+        иначе   flag := 0;
+    кц
+ return flag; 
+кон 
